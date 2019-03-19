@@ -34,6 +34,7 @@ func loadCRDs(cfg internal.Config) internal.CRDMap {
 }
 
 func loadCRDsFromKubernetes(cfg internal.Config) internal.CRDMap {
+	k8s, err := internal.NewKubernetes(cfg)
 	return make(internal.CRDMap)
 }
 
