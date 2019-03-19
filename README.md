@@ -32,7 +32,7 @@ crd-lint -kubeconfig /tmp/.kube/config manifest-1.yaml manifest-2.yaml
 ```
 
 For more detailed usage information and a complete list of the available
-command-line flags for ``crd-lint`` see the ``crd-list`` help.
+command-line flags for ``crd-lint`` see the ``crd-lint`` help.
 
 ```shell
 crd-lint -help
