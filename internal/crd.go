@@ -1,5 +1,105 @@
 package internal
 
-import apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+import (
+	"errors"
+	"os"
+
+	"k8s.io/apimachinery/pkg/util/yaml"
+
+	log "github.com/sirupsen/logrus"
+	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	//_ "k8s.io/kubernetes/pkg/api/install"
+	//_ "k8s.io/kubernetes/pkg/apis/extensions/install"
+)
 
 type CRDMap map[string]apiextensionsv1beta1.CustomResourceDefinition
+
+func NewCRDMap(cfg Config, k8s Kubernetes) (CRDMap, error) {
+	log.Trace("-> NewCRDMap(Config, Kubernetes)")
+
+	crds, err := loadCRDs(cfg, k8s)
+	if err != nil {
+		log.Error(err)
+		return nil, err
+	}
+
+	c := make(CRDMap)
+	for _, crd := range crds {
+		c[crd.ObjectMeta.Name] = crd
+	}
+
+	if len(c) > 0 {
+		log.Info("Custom Resource Definitions (CRDs)")
+		for k, v := range c {
+			if v.Spec.Validation == nil {
+				log.Warn("  ", k, " - ", v.Spec.Version, " (No validation provided)")
+				continue
+			}
+			log.Info("  ", k, " - ", v.Spec.Version)
+		}
+	}
+
+	log.Trace("NewCRDMap(Config, Kubernetes) ->")
+	return c, nil
+}
+
+func loadCRDs(cfg Config, k8s Kubernetes) ([]apiextensionsv1beta1.CustomResourceDefinition, error) {
+	if cfg.Offline() {
+		return loadCRDsFromPath(cfg)
+	}
+	return loadCRDsFromKubernetes(k8s)
+}
+
+func loadCRDsFromKubernetes(k8s Kubernetes) ([]apiextensionsv1beta1.CustomResourceDefinition, error) {
+	return k8s.CRDs()
+}
+
+func loadCRDsFromPath(cfg Config) ([]apiextensionsv1beta1.CustomResourceDefinition, error) {
+	fi, err := os.Stat(cfg.CRDPath)
+	if err != nil {
+		log.Error(err)
+		return nil, err
+	}
+
+	if !fi.IsDir() {
+		err = errors.New("")
+		log.Error(err)
+		return nil, err
+	}
+
+	dir, err := os.Open(cfg.CRDPath)
+	if err != nil {
+		log.Error(err)
+		return nil, err
+	}
+
+	fis, err := dir.Readdir(0)
+	if err != nil {
+		log.Error(err)
+		return nil, err
+	}
+
+	log.Info("Files:")
+	for _, fi := range fis {
+		log.Info("  ", fi.Name())
+		if fi.IsDir() {
+			continue
+		}
+		f, err := os.Open(cfg.CRDPath + fi.Name())
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+		var crd apiextensionsv1beta1.CustomResourceDefinition
+		err = yaml.NewYAMLOrJSONDecoder(f, 100).Decode(crd)
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+		log.Info(crd)
+		log.Info(crd.APIVersion)
+		log.Info(crd.ObjectMeta.Name)
+	}
+
+	return nil, nil
+}
