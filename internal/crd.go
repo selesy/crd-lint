@@ -81,23 +81,26 @@ func loadCRDsFromPath(cfg Config) ([]apiextensionsv1beta1.CustomResourceDefiniti
 
 	log.Info("Files:")
 	for _, fi := range fis {
-		log.Info("  ", fi.Name())
+		fn := cfg.CRDPath + fi.Name()
+		log.Info("  ", fn)
 		if fi.IsDir() {
 			continue
 		}
-		f, err := os.Open(cfg.CRDPath + fi.Name())
+		f, err := os.Open(fn)
 		if err != nil {
 			log.Error(err)
 			continue
 		}
+		defer f.Close()
 		var crd apiextensionsv1beta1.CustomResourceDefinition
-		err = yaml.NewYAMLOrJSONDecoder(f, 100).Decode(crd)
+		err = yaml.NewYAMLOrJSONDecoder(f, 100).Decode(&crd)
 		if err != nil {
 			log.Error(err)
 			continue
 		}
 		log.Info(crd)
 		log.Info(crd.APIVersion)
+		log.Info(crd.Kind)
 		log.Info(crd.ObjectMeta.Name)
 	}
 
