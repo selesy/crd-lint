@@ -80,6 +80,7 @@ func loadCRDsFromPath(cfg Config) ([]apiextensionsv1beta1.CustomResourceDefiniti
 		return nil, err
 	}
 
+	var c []apiextensionsv1beta1.CustomResourceDefinition
 	log.Info("Files:")
 	for _, fi := range fis {
 		fn := cfg.CRDPath + fi.Name()
@@ -101,11 +102,14 @@ func loadCRDsFromPath(cfg Config) ([]apiextensionsv1beta1.CustomResourceDefiniti
 			}
 			continue
 		}
-		log.Info(crd)
-		log.Info(crd.APIVersion)
-		log.Info(crd.Kind)
-		log.Info(crd.ObjectMeta.Name)
+		// log.Info(crd)
+		// log.Info(crd.APIVersion)
+		// log.Info(crd.Kind)
+		// log.Info(crd.ObjectMeta.Name)
+		if crd.Kind == "CustomResourceDefinition" {
+			c = append(c, crd)
+		}
 	}
 
-	return nil, nil
+	return c, nil
 }
