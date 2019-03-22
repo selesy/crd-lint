@@ -9,8 +9,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-	//_ "k8s.io/kubernetes/pkg/api/install"
-	//_ "k8s.io/kubernetes/pkg/apis/extensions/install"
 )
 
 type CRDMap map[string]apiextensionsv1beta1.CustomResourceDefinition
@@ -102,10 +100,6 @@ func loadCRDsFromPath(cfg Config) ([]apiextensionsv1beta1.CustomResourceDefiniti
 			}
 			continue
 		}
-		// log.Info(crd)
-		// log.Info(crd.APIVersion)
-		// log.Info(crd.Kind)
-		// log.Info(crd.ObjectMeta.Name)
 		if crd.Kind == "CustomResourceDefinition" {
 			c = append(c, crd)
 		}
