@@ -2,6 +2,7 @@ package internal
 
 import (
 	"errors"
+	"io"
 	"os"
 
 	"k8s.io/apimachinery/pkg/util/yaml"
@@ -95,7 +96,9 @@ func loadCRDsFromPath(cfg Config) ([]apiextensionsv1beta1.CustomResourceDefiniti
 		var crd apiextensionsv1beta1.CustomResourceDefinition
 		err = yaml.NewYAMLOrJSONDecoder(f, 100).Decode(&crd)
 		if err != nil {
-			log.Error(err)
+			if err != io.EOF {
+				log.Error(err)
+			}
 			continue
 		}
 		log.Info(crd)
