@@ -11,7 +11,12 @@ import (
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 )
 
-type CRDMap map[string]apiextensionsv1beta1.CustomResourceDefinition
+type CRDKey struct {
+	Name    string
+	Version string
+}
+
+type CRDMap map[CRDKey]apiextensionsv1beta1.CustomResourceDefinition
 
 func NewCRDMap(cfg Config, k8s Kubernetes) (CRDMap, error) {
 	log.Trace("-> NewCRDMap(Config, Kubernetes)")
@@ -24,7 +29,11 @@ func NewCRDMap(cfg Config, k8s Kubernetes) (CRDMap, error) {
 
 	c := make(CRDMap)
 	for _, crd := range crds {
-		c[crd.ObjectMeta.Name] = crd
+		k := CRDKey{
+			Name:    crd.ObjectMeta.Name,
+			Version: crd.Spec.Version,
+		}
+		c[k] = crd
 	}
 
 	if len(c) > 0 {
@@ -34,7 +43,7 @@ func NewCRDMap(cfg Config, k8s Kubernetes) (CRDMap, error) {
 				log.Warn("  ", k, " - ", v.Spec.Version, " (No validation provided)")
 				continue
 			}
-			log.Info("  ", k, " - ", v.Spec.Version)
+			log.Info("  ", k.Name, " - ", k.Version)
 		}
 	}
 
@@ -79,7 +88,7 @@ func loadCRDsFromPath(cfg Config) ([]apiextensionsv1beta1.CustomResourceDefiniti
 	}
 
 	var c []apiextensionsv1beta1.CustomResourceDefinition
-	log.Info("Files:")
+	log.Info("CRD files (candidates):")
 	for _, fi := range fis {
 		fn := cfg.CRDPath + fi.Name()
 		log.Info("  ", fn)
